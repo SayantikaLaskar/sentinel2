@@ -21,8 +21,8 @@ observability:
   alert_threshold_multiplier: 1.5
 
 training:
-  max_steps_per_episode: 200
-  sla_breach_threshold_steps: 50
+  max_steps_per_episode: 20
+  sla_breach_threshold_steps: 10
   placeholder_action:
     agent: holmes
     category: investigative

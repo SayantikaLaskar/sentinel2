@@ -56,18 +56,19 @@ class Reward_Function:
     ) -> float:
         """Return the immediate step reward for *action*.
 
-        Penalties applied:
-        - Blast radius expansion: -1.0 when current_blast_radius grew vs the
-          pre-action snapshot captured in *incident_state*.
-        - Healthy-service restart: blast_radius penalty contribution when
-          RestartService targets a service that is currently healthy.
-
-        The caller is responsible for passing the *pre-action* incident_state
-        so that blast radius expansion can be detected.
+        Reward shaping provides dense signal beyond just penalties:
+        - Investigative actions targeting the actual root cause service: +0.15
+        - FormHypothesis correctly identifying root cause service: +0.20
+        - FormHypothesis correctly identifying service + failure type: +0.30
+        - Remediation targeting the actual root cause: +0.25
+        - Remediation that reduces blast radius: +0.10 per service recovered
+        - Wrong-service investigative actions: -0.05 (mild discouragement)
+        - Blast radius expansion: -1.0
+        - Healthy-service restart: -1.0
         """
-        penalty = 0.0
+        reward = 0.0
 
-        # Detect blast radius expansion (pre-action BR is in incident_state)
+        # ── Blast radius expansion penalty ────────────────────────────
         pre_br = incident_state.current_blast_radius
         post_br = (
             world_state.incident_state.current_blast_radius
@@ -75,17 +76,51 @@ class Reward_Function:
             else pre_br
         )
         if len(post_br) > len(pre_br):
-            penalty -= 1.0
+            reward -= 1.0
 
-        # Healthy-service restart penalty
+        # ── Blast radius reduction bonus ──────────────────────────────
+        if len(post_br) < len(pre_br):
+            services_recovered = len(pre_br) - len(post_br)
+            reward += 0.10 * services_recovered
+
+        # ── Healthy-service restart penalty ───────────────────────────
         if action.name == "RestartService":
             target = action.params.get("service", "")
             if target and target in world_state.services:
                 svc_metrics = world_state.services[target]
                 if svc_metrics.availability:
-                    penalty -= 1.0
+                    reward -= 1.0
 
-        return penalty
+        # ── Investigative reward shaping ──────────────────────────────
+        target_service = action.params.get("service", "")
+        root_cause = incident_state.root_cause_service
+
+        if action.category == "investigative" and target_service:
+            if target_service == root_cause:
+                reward += 0.15   # investigating the right service
+            else:
+                reward -= 0.05   # mild penalty for investigating wrong service
+
+        # ── FormHypothesis shaping ────────────────────────────────────
+        if action.name == "FormHypothesis":
+            hyp_service = action.params.get("service", "")
+            hyp_ft = action.params.get("failure_type", "")
+            if hyp_service == root_cause:
+                if hyp_ft == incident_state.failure_type.value:
+                    reward += 0.30   # correct service + failure type
+                else:
+                    reward += 0.20   # correct service, wrong failure type
+            else:
+                reward -= 0.10   # wrong hypothesis
+
+        # ── Targeted remediation shaping ──────────────────────────────
+        if action.category == "remediation" and target_service:
+            if target_service == root_cause:
+                reward += 0.25   # remediating the correct root cause
+            elif target_service in incident_state.current_blast_radius:
+                reward += 0.05   # remediating an affected (but not root) service
+
+        return reward
 
     # ------------------------------------------------------------------
     # Episode reward
@@ -103,10 +138,13 @@ class Reward_Function:
         ``trajectory.steps[-1].info`` keys ``identified_root_cause`` and
         ``identified_failure_type`` (both default to empty string if absent).
         """
-        # Extract identified root cause from the last step's info dict
-        last_info: dict = trajectory.steps[-1].info if trajectory.steps else {}
-        identified_root_cause: str = last_info.get("identified_root_cause", "")
-        identified_failure_type: str = last_info.get("identified_failure_type", "")
+        # Extract identified root cause from the latest hypothesis in incident_state
+        identified_root_cause = ""
+        identified_failure_type = ""
+        if incident_state.active_hypotheses:
+            best_hyp = incident_state.active_hypotheses[-1]
+            identified_root_cause = best_hyp.service
+            identified_failure_type = best_hyp.failure_type.value
 
         r1 = self._r1_root_cause_accuracy(
             incident_state, identified_root_cause, identified_failure_type

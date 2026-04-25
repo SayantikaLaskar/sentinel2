@@ -39,9 +39,10 @@ checkpoints/
 *.pt
 *.pth
 
-# Training logs (regenerated)
-training_log.jsonl
+# Training logs (keep for results)
 
-# Temp scripts
-run_simulation.py
-plot_results.py
+# Essential scripts (allow for demo)
+!run_training.py
+
+# Notebooks
+!*.ipynb

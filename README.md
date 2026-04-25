@@ -26,7 +26,26 @@ SENTINEL turns this into a **trainable Gymnasium environment** where an agent mu
 - Remediate without expanding the blast radius
 - Do it all within an SLA time window
 
-This is **not a toy problem** — it models real-world SRE incident response with realistic failure propagation, dependency graphs, and multi-agent coordination.
+This is **not a toy problem** — it models real-world SRE incident response with realistic failure propagation, dependency graphs, and multi-agent coordination. It specifically targets **Hackathon Theme #3 (World Modeling - Professional Tasks)** and **Theme #4 (Self-Improvement)**.
+
+---
+
+## Hackathon Alignment
+
+### Theme #3: World Modeling (Professional Tasks)
+SENTINEL requires the agent to interact with a complex dynamic system (30 microservices) where it must maintain consistent internal state and orchestrate multi-step workflows. It strengthens **causal reasoning** by forcing the agent to distinguish between root causes and downstream cascading effects.
+
+### Theme #4: Self-Improvement
+The environment includes an **ORACLE agent** that implements an **ALP (Absolute Learning Progress) Curriculum**. Instead of optimizing fixed tasks, the ORACLE generates new incident scenarios by selecting failure types where the agent has the most room to improve, driving recursive skill amplification.
+
+---
+
+## Causal Reasoning & Professional Workflows
+
+SENTINEL moves beyond sequence prediction by enforcing a rigorous operational cycle:
+1. **Evidence Gathering:** Agents must explicitly perform diagnostic actions (QueryLogs, etc.) rather than guessing, penalizing reckless remediation.
+2. **Causal Mapping:** By using the dependency graph as a ground truth, the environment forces agents to learn the topology of the system.
+3. **Blast Radius Control:** Remediation is not a single-step action; it is a constrained operation where the agent must evaluate the potential side effects of its choices on the 30-node service mesh.
 
 ---
 
@@ -135,6 +154,32 @@ Full transcript: [`results/before_after_transcript.md`](results/before_after_tra
 
 ---
 
+## Real-Time Command Center
+
+SENTINEL ships with a live Gradio dashboard that visualizes the multi-agent system in action.
+
+```bash
+# Terminal 1 — Start continuous training
+python run_training.py
+
+# Terminal 2 — Launch the dashboard
+python demo/app.py
+# Open: http://127.0.0.1:7860
+```
+
+### What You'll See
+
+| Panel | Description |
+|-------|-------------|
+| **Service Health Grid** | 30 microservices color-coded: 🟢 healthy · 🔴 down · 🟠 blast radius |
+| **Causal Dependency Graph** | Live network graph — red nodes = actively failing, propagation visible |
+| **Agent Episode Feed** | Streams reward, recovery score, and MTTR for every completed episode |
+| **Live Agent Thoughts (CoT)** | Agent's chain-of-thought reasoning displayed in real time |
+| **Training Progress Chart** | Episode reward curve updating every 2 seconds from `training_log.jsonl` |
+| **Inject Incident** | Drop-down to inject any of the 10 scenarios (E1–H3) into the live environment |
+
+---
+
 ## Quick Start
 
 ```bash
@@ -158,11 +203,10 @@ python plot_results.py
 pytest tests/ -v
 ```
 
-### Colab Notebook
+### Colab Notebooks
 
-**[▶ Open in Google Colab](https://colab.research.google.com/github/SayantikaLaskar/sentinel/blob/main/sentinel_colab_demo.ipynb)**
-
-Runs top-to-bottom, no GPU needed, no API keys needed. Produces plots and transcripts.
+- **[▶ Math Baseline (CPU, Fast)](https://colab.research.google.com/github/SayantikaLaskar/sentinel/blob/main/sentinel_colab_demo.ipynb)**
+- **[▶ Deep RL GRPO Training (GPU, Unsloth/TRL)](https://colab.research.google.com/github/SayantikaLaskar/sentinel/blob/main/sentinel_grpo_training.ipynb)**
 
 ---
 
@@ -198,6 +242,7 @@ sentinel/
 │   └── before_after_transcript.md
 ├── tests/                      # Unit + property + integration tests
 ├── sentinel_colab_demo.ipynb   # Runnable Colab notebook
+├── sentinel_grpo_training.ipynb # GRPO Training notebook
 ├── openenv.yaml                # OpenEnv manifest
 ├── env_spec.yaml               # Environment config
 ├── incident_library.yaml       # 18 incident scenarios (easy/medium/hard)
@@ -213,13 +258,11 @@ sentinel/
 - [x] OpenEnv-compatible environment manifest (`openenv.yaml`)
 - [x] Gymnasium API: `reset()` / `step()` / `render()` / `close()`
 - [x] Working training script (`sentinel/training/pipeline.py`)
-- [x] Colab notebook — runs top-to-bottom (`sentinel_colab_demo.ipynb`)
-- [x] Reward curves image (`results/training_curves.png`)
+- [x] Math Baseline Colab (`sentinel_colab_demo.ipynb`)
+- [x] LLM GRPO Training Colab (`sentinel_grpo_training.ipynb`)
 - [x] Before/after behavior transcript (`results/before_after_transcript.md`)
 - [x] Simulation results JSON (`results/simulation_results.json`)
-- [x] Blog post (`blog/huggingface_post.md`)
-- [x] Video script (`blog/youtube_script.md`)
-- [x] Complete README with results
+- [x] Complete README with results aligned to Themes #3 & #4
 - [x] Full test suite (unit + property + integration)
 - [x] Docker support
 
@@ -229,7 +272,7 @@ sentinel/
 
 | Asset | Link |
 |-------|------|
-| 📓 Colab Notebook | [sentinel_colab_demo.ipynb](https://colab.research.google.com/github/SayantikaLaskar/sentinel/blob/main/sentinel_colab_demo.ipynb) |
+| 📓 Colab Notebooks | [Math Baseline](https://colab.research.google.com/github/SayantikaLaskar/sentinel/blob/main/sentinel_colab_demo.ipynb) / [GRPO Training](https://colab.research.google.com/github/SayantikaLaskar/sentinel/blob/main/sentinel_grpo_training.ipynb) |
 | 📝 HuggingFace Blog | [blog/huggingface_post.md](blog/huggingface_post.md) |
 | 🎬 Video Script | [blog/youtube_script.md](blog/youtube_script.md) |
 | 📊 Training Curves | [results/training_curves.png](results/training_curves.png) |

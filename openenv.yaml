@@ -170,7 +170,9 @@ quickstart: |
 submission:
   hackathon: "Meta PyTorch OpenEnv Hackathon 2026"
   track: "Multi-Agent RL Environments"
-  colab_notebook: "sentinel_colab_demo.ipynb"
+  colab_notebooks:
+    - "sentinel_colab_demo.ipynb"
+    - "sentinel_grpo_training.ipynb"
   blog_post: "blog/huggingface_post.md"
   video_script: "blog/youtube_script.md"
   results_dir: "results/"
