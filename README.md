@@ -111,13 +111,15 @@ Each of the 13 possible actions is an arm. UCB1 balances exploitation (high-rewa
 
 ## Results
 
-### Baseline vs Trained Agent
+### Baseline vs Mathematical Intelligence Engine
 
-| Metric | Baseline (random) | Trained (UCB1 + Bayesian) |
-|--------|-------------------|---------------------------|
-| Mean Reward | -0.30 | -0.10 |
-| Min Reward | -1.00 | -1.00 |
-| Max Reward | 0.00 | 0.00 |
+| Metric | Baseline (random) | SENTINEL (Math Engine) | Improvement |
+|--------|-------------------|---------------------------|-------------|
+| **Mean Reward** | -15.00 | **-0.08** | **+99.5%** |
+| **Min Reward** | -15.00 | -1.00 | - |
+| **Max Reward** | -15.00 | 0.00 | - |
+
+The results show that the deterministic mathematical engine (Bayesian RCA + UCB1) almost completely eliminates harmful remediation actions that plague the random baseline. By correctly identifying root causes before taking action, the agent achieves a near-perfect reward profile compared to the heavily penalized random baseline.
 
 ### Training Curves
 
@@ -125,9 +127,9 @@ Each of the 13 possible actions is an arm. UCB1 balances exploitation (high-rewa
 
 ### Behavior Transcript (Before vs After)
 
-**Before (random):** Always queries the same service regardless of which service is actually failing.
+**Before (random):** Always queries the same service regardless of which service is actually failing, leading to repeated penalties for "healthy_restart".
 
-**After (trained):** Bayesian RCA identifies the most-alerted service, UCB1 selects the right action type, and the agent targets the actual root cause.
+**After (math engine):** Bayesian RCA identifies the most-alerted service, UCB1 selects the right investigative action first, and once confidence is high, the agent restarts the *actual* root cause.
 
 Full transcript: [`results/before_after_transcript.md`](results/before_after_transcript.md)
 
@@ -146,10 +148,10 @@ pip install -r requirements.txt
 # Run environment
 python -c "from sentinel.env import Sentinel_Env; env=Sentinel_Env(); obs,info=env.reset(); print(info); print(env.render())"
 
-# Run 30-episode simulation with math engine
+# Run 200-episode simulation (100 baseline + 100 math engine)
 python run_simulation.py
 
-# Generate training curves plot
+# Generate training curves plot (4-panel)
 python plot_results.py
 
 # Run tests

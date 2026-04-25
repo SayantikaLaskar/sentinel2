@@ -10,7 +10,7 @@ import time
 from typing import Any
 
 from sentinel.config import load_config
-from sentinel.training.pipeline import get_placeholder_action
+from sentinel.training.pipeline import _get_action, TrainingConfig
 
 try:
     import gradio as gr
@@ -36,13 +36,13 @@ _INCIDENT_IDS = ["E1", "E2", "E3", "M1", "M2", "M3", "M4", "H1", "H2", "H3"]
 # ---------------------------------------------------------------------------
 
 def _seed_demo_state(env: Any) -> None:
-    """Run 5 steps with seed=42 to populate demo state."""
-    cfg = load_config()
-    seed = cfg.demo.seed
-    action = get_placeholder_action()
-    env.reset(seed=seed)
+    """Run 5 steps with seed=42 to populate demo state using smart actions."""
+    cfg = TrainingConfig()
+    obs, info = env.reset(seed=42)
     for _ in range(5):
-        obs, reward, terminated, truncated, info = env.step(action)
+        action = _get_action(None, obs, cfg)
+        arm_idx = action.pop("_ucb1_arm_idx", None)
+        obs, reward, terminated, truncated, _ = env.step(action)
         _action_log.append({
             "timestamp": time.time(),
             "agent": action.get("agent", "holmes"),
